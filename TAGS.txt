@@ -1,0 +1,5 @@
+content.data-type.image # Contains image data.
+content.subject.computer-science # Relates to computer science.
+content.subject.internet # Relates to internet.
+ml.task.image-classification # Relates to Image Classification, a machine learning task.
+ml.task.image-segmentation # Relates to Image Segmentation, a machine learning task.
