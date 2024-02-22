@@ -44,10 +44,15 @@ class Builder(tfds.core.GeneratorBasedBuilder):
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict({
           "image": tfds.features.Image(shape=FDF_IMAGE_SHAPE),
-          # "metadata": tfds.features.ClassLabel(
-          #   names=['cc-by-nc-sa-2', 'cc-by-2', 'cc-by-sa-2', 'cc-by-nc-2'],
-          #   doc=tfds.features.Documentation(
-          #     desc="Image and its usage rights")),
+          "landmarks": {
+            'nose': tfds.features.Tensor(shape=(2,)),
+            'r_eye': tfds.features.Tensor(shape=(2,)),
+            'l_eye': tfds.features.Tensor(shape=(2,)),
+            'r_ear': tfds.features.Tensor(shape=(2,)),
+            'l_ear': tfds.features.Tensor(shape=(2,)),
+            'r_shoulder': tfds.features.Tensor(shape=(2,)),
+            'l_shoulder': tfds.features.Tensor(shape=(2,)),
+          },
           "bbox": tfds.features.BBoxFeature(),
         }),
         supervised_keys=None,
@@ -77,12 +82,16 @@ class Builder(tfds.core.GeneratorBasedBuilder):
   def _generate_examples(self, output_files, split):
     image_list = self.get_image_paths(output_files=output_files, split=split)
     bounds = self.load_bounds(
-      bounds_path=os.path.join(output_files['metadata'], split, "bounding_box.npy"))
+      bounds_path=os.path.join(output_files['metadata'], split, "bounding_box.npy")
+    )
+    landmarks = self.load_landmarks(
+      landmarks_path=os.path.join(output_files['metadata'], split, "landmarks_box.npy")
+    )
     for image, bound in zip(image_list, bounds):
       key = "%s/%s" % (os.path.basename(image), bound)
       yield key, {
           "image": image,
-          # "metadata": None,
+          "landmarks": landmarks,
           "bbox": bound
       }
 
@@ -101,3 +110,17 @@ class Builder(tfds.core.GeneratorBasedBuilder):
     bounds = np.load(bounds_path)
     bounds = np.divide(bounds, 256.)
     return bounds
+
+  def load_landmarks(self, landmarks_path) -> dict:
+    landmarks = np.load(landmarks_path)
+    landmarks = np.divide(landmarks, 256.)
+    landmarks = {
+      'nose': landmarks[0],
+      'r_eye': landmarks[1],
+      'l_eye': landmarks[2],
+      'r_ear': landmarks[3],
+      'l_ear': landmarks[4],
+      'r_shoulder': landmarks[5],
+      'l_shoulder': landmarks[6],
+    }
+    return landmarks
